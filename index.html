@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Shubh PDF Converter - Universal Image to PDF</title>
+  <!-- SEO Meta Tags -->
+  <meta name="description"
+    content="Convert PNG, JPG, WebP, SVG, BMP, and TIFF images into a single high-quality PDF instantly in your browser. Secure, fast, and 100% private client-side processing. Fully offline — no internet required.">
+
+  <!-- Google Fonts: Outfit (loaded from local cache after first use; or pre-bundled via CSS) -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&display=swap"
+    rel="stylesheet">
+
+  <!-- CSS Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+
+  <!-- LOCAL: UTIF.js — TIFF decoder -->
+  <script src="libs/UTIF.js"></script>
+
+  <!-- LOCAL: jsPDF Library -->
+  <script src="libs/jspdf.umd.min.js"></script>
+
+  <!-- LOCAL: SortableJS Library -->
+  <script src="libs/Sortable.min.js"></script>
+
+  <!-- LOCAL: Lucide Icons -->
+  <script src="libs/lucide.min.js"></script>
+</head>
+
+<body>
+  <div class="app-container">
+
+    <!-- ── Browser Compatibility Warning (shown only for non-Chromium) ─────── -->
+    <div class="fs-warning-banner hidden" id="fs-warning-banner">
+      <i data-lucide="alert-triangle" class="warning-icon"></i>
+      <div class="warning-text">
+        <strong>File System API Not Supported</strong>
+        <span>Your browser doesn't support the File System Access API. Images will be processed in memory and
+          the PDF will download via the standard browser dialog. Use Chrome or Edge for full offline disk
+          storage.</span>
+      </div>
+    </div>
+
+    <!-- Header -->
+    <header class="app-header">
+      <div class="logo-area">
+        <div class="logo-icon-wrapper">
+          <i data-lucide="file-image" class="logo-icon"></i>
+        </div>
+        <div class="logo-text">
+          <h1>Shubh's <span>PDF Converter</span></h1>
+          <p class="tagline">Convert any image format to PDF instantly</p>
+        </div>
+      </div>
+      <div class="privacy-badge">
+        <i data-lucide="shield-check" class="badge-icon"></i>
+        <span> Easy all file type support </span>
+      </div>
+    </header>
+
+    <!-- ── Folder Setup Banner ─────────────────────────────────────────────── -->
+    <div class="folder-setup-banner" id="folder-setup-banner">
+      <div class="folder-setup-inner">
+        <div class="folder-setup-icon">
+          <i data-lucide="folder-open"></i>
+        </div>
+        <div class="folder-setup-text">
+          <strong>Connect Project Folder</strong>
+          <span id="folder-status-text">Select your "New folder" directory to save images and PDFs directly to
+            disk</span>
+        </div>
+        <button class="folder-select-btn" id="select-folder-btn">
+          <i data-lucide="folder-plus"></i>
+          <span>Select Folder</span>
+        </button>
+      </div>
+
+      <!-- Path Indicator Row (shown after connection) -->
+      <div class="path-indicator-row hidden" id="path-indicator-row">
+        <div class="path-chip uploads-chip">
+          <i data-lucide="upload" class="chip-icon"></i>
+          <span class="chip-label">Uploads</span>
+          <span class="path-badge" id="uploads-path-badge">—</span>
+        </div>
+        <div class="path-divider">→</div>
+        <div class="path-chip output-chip">
+          <i data-lucide="file-output" class="chip-icon"></i>
+          <span class="chip-label">Output</span>
+          <span class="path-badge" id="output-path-badge">—</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Main Content Grid -->
+    <main class="main-content">
+      <!-- Drag & Drop Zone -->
+      <section class="upload-section">
+        <div class="drop-zone" id="drop-zone">
+          <input type="file" id="file-input" multiple
+            accept="image/jpeg,image/jpg,image/png,image/webp,image/svg+xml,image/bmp,image/tiff,.tif,.tiff"
+            class="file-input-hidden">
+          <div class="drop-zone-content">
+            <div class="upload-icon-pulse">
+              <i data-lucide="upload-cloud" class="upload-icon"></i>
+            </div>
+            <h3>Upload Images</h3>
+            <p class="drop-prompt">Drag and drop your images here, or <span class="browse-link">browse files</span></p>
+            <p class="file-limitations">Supports PNG, JPG, WebP, SVG, BMP &amp; TIFF. Mix formats freely.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Gallery Grid -->
+      <section class="gallery-section">
+        <div class="gallery-header">
+          <div class="gallery-title-wrapper">
+            <i data-lucide="images" class="section-icon"></i>
+            <h2>Images in Queue</h2>
+            <span class="image-count-badge" id="image-count">0 images</span>
+          </div>
+          <div class="gallery-actions">
+            <button class="add-more-btn secondary-btn hidden" id="add-more-btn">
+              <i data-lucide="image-plus" class="btn-icon"></i>
+              <span>Add More</span>
+            </button>
+            <button class="clear-btn secondary-btn hidden" id="clear-queue-btn">
+              <i data-lucide="trash-2" class="btn-icon"></i>
+              <span>Clear Queue</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Drag Hint Banner -->
+        <div class="drag-hint-banner" id="drag-hint">
+          <i data-lucide="grip-vertical" class="drag-hint-icon"></i>
+          <span>Drag the cards below to reorder pages — the PDF will follow this exact sequence</span>
+          <button class="drag-hint-close" id="drag-hint-close" title="Dismiss">
+            <i data-lucide="x" style="width:12px;height:12px;"></i>
+          </button>
+        </div>
+
+        <!-- Empty State -->
+        <div class="empty-state" id="empty-state">
+          <div class="empty-icon-wrapper">
+            <i data-lucide="image" class="empty-icon"></i>
+          </div>
+          <h3>Queue is empty</h3>
+          <p>Drag and drop images above to start compiling your PDF</p>
+        </div>
+
+        <!-- Thumbnail Grid Container -->
+        <div class="thumbnail-grid hidden" id="thumbnail-grid">
+          <!-- Thumbnails will be dynamically injected here -->
+        </div>
+      </section>
+    </main>
+
+    <!-- Fixed Bottom Action Bar -->
+    <footer class="action-bar-container">
+      <div class="action-bar">
+        <div class="status-summary">
+          <span class="summary-text" id="summary-text">No files selected</span>
+        </div>
+
+        <!-- Progress Container (nested in bar) -->
+        <div class="progress-container hidden" id="progress-container">
+          <div class="progress-info">
+            <span class="progress-status" id="progress-status">Generating PDF...</span>
+            <span class="progress-percent" id="progress-percent">0%</span>
+          </div>
+          <div class="progress-track">
+            <div class="progress-fill" id="progress-fill"></div>
+          </div>
+        </div>
+
+        <div class="actions-group">
+          <button class="primary-btn convert-btn" id="convert-btn" disabled>
+            <i data-lucide="file-output" class="btn-icon"></i>
+            <span>Convert to PDF</span>
+          </button>
+        </div>
+      </div>
+    </footer>
+  </div>
+
+  <!-- Notification Toast -->
+  <div class="toast-notification" id="toast">
+    <i data-lucide="check-circle" class="toast-icon text-success" id="toast-icon"></i>
+    <span class="toast-message" id="toast-message">PDF generated successfully!</span>
+  </div>
+
+  <!-- Lightbox Modal -->
+  <div class="lightbox-overlay" id="lightbox-overlay" role="dialog" aria-modal="true" aria-label="Image Preview">
+    <div class="lightbox-inner">
+      <button class="lightbox-close" id="lightbox-close" title="Close preview">
+        <i data-lucide="x" style="width:20px;height:20px;"></i>
+      </button>
+      <img src="" alt="Full-size preview" class="lightbox-img" id="lightbox-img">
+      <div class="lightbox-caption" id="lightbox-caption"></div>
+    </div>
+    <!-- Prev/Next navigation -->
+    <button class="lightbox-nav lightbox-prev" id="lightbox-prev" title="Previous image">
+      <i data-lucide="chevron-left" style="width:24px;height:24px;"></i>
+    </button>
+    <button class="lightbox-nav lightbox-next" id="lightbox-next" title="Next image">
+      <i data-lucide="chevron-right" style="width:24px;height:24px;"></i>
+    </button>
+  </div>
+
+  <!-- Custom JS (offline engine) -->
+  <script src="app.js"></script>
+  <!-- Initialize Lucide icons after all content is loaded -->
+  <script>lucide.createIcons();</script>
+</body>
+
+</html>
